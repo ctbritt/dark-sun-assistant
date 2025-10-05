@@ -8,5 +8,5 @@ data/
 *.sqlite
 public/js/*.js
 public/js/*.js.map
-mcp-servers/
 path-names.txt
+.claude/
