@@ -1,0 +1,12 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+.env
+data/
+*.db
+*.sqlite
+public/js/*.js
+public/js/*.js.map
+mcp-servers/
+path-names.txt

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dark Sun Campaign Assistant</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🌅 Dark Sun Campaign Assistant</h1>
+      <div class="status" id="status">
+        <span class="status-indicator"></span>
+        <span id="status-text">Connecting...</span>
+      </div>
+    </header>
+
+    <main>
+      <div class="layout">
+        <aside class="sidebar">
+          <div class="sidebar-header">
+            <h2>Conversations</h2>
+            <button id="new-conversation-btn" title="New Conversation">+</button>
+          </div>
+          <div id="conversations-list" class="conversations-list">
+            <!-- Conversations will be loaded here -->
+          </div>
+        </aside>
+
+        <section class="chat-area">
+          <div id="messages" class="messages">
+            <div class="welcome-message">
+              <h2>Welcome to Dark Sun Campaign Assistant</h2>
+              <p>Your AI-powered companion for Dark Sun campaigns.</p>
+              <ul>
+                <li>💬 Ask questions about the Dark Sun setting</li>
+                <li>📖 Access your Obsidian notes</li>
+                <li>🎲 Manage Foundry VTT content</li>
+                <li>🗺️ Track campaign events and NPCs</li>
+              </ul>
+              <p class="note">Start a conversation below to begin!</p>
+            </div>
+          </div>
+
+          <form id="chat-form" class="chat-input">
+            <textarea
+              id="message-input"
+              placeholder="Ask about the Dark Sun world, your notes, or campaign..."
+              rows="2"
+            ></textarea>
+            <button type="submit" id="send-btn">Send</button>
+          </form>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

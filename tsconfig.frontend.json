@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "outDir": "./public/js",
+    "rootDir": "./frontend",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "bundler",
+    "sourceMap": true
+  },
+  "include": ["frontend/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}
