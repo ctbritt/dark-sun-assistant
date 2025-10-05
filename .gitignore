@@ -1,12 +1,49 @@
+# Dependencies
 node_modules/
+package-lock.json
+
+# Build output
 dist/
-*.log
-.DS_Store
-.env
-data/
-*.db
-*.sqlite
 public/js/*.js
 public/js/*.js.map
-path-names.txt
-.claude/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+/tmp/
+
+# Backup files
+*.backup
+*.bak
+
+# MCP server logs
+mcp-*.log

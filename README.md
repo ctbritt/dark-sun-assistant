@@ -2,16 +2,28 @@
 
 An AI-powered campaign assistant for Dark Sun D&D campaigns, featuring integration with MCP (Model Context Protocol) servers for Obsidian notes, Foundry VTT, and local filesystem access.
 
-## Current Status: MVP
+## Current Status: ✅ Tested & Working
 
-This project is currently at MVP (Minimum Viable Product) stage with the following working features:
+**Last Tested:** October 5, 2025  
+**Status:** Core functionality working, configuration required for full features
 
-- ✅ Web-based UI for chat interface
+### ✅ What's Working:
+- ✅ Server builds and starts successfully
+- ✅ Web-based UI with modern chat interface
 - ✅ REST API for conversations and chat
-- ✅ Mock chat functionality (responds without AI integration)
-- ✅ In-memory conversation storage
-- ✅ Health check endpoint
-- ✅ MCP client framework (ready for configuration)
+- ✅ In-memory conversation storage (CRUD operations)
+- ✅ Health check endpoint with MCP status
+- ✅ MCP client framework configured for 3 servers
+- ✅ Frontend TypeScript compiled to ES modules
+- ✅ Foundry VTT server accessible and running
+
+### ⚠️ Configuration Required:
+- ⚠️ Anthropic API key (for Claude AI chat)
+- ⚠️ SSH key authentication (for Foundry MCP access)
+- ⚠️ Foundry MCP Bridge module (for Foundry integration)
+
+**See [QUICK_SETUP.md](QUICK_SETUP.md) for 30-minute setup guide**  
+**See [TEST_REPORT.md](TEST_REPORT.md) for detailed test results**
 
 ## Prerequisites
 
