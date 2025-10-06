@@ -18,7 +18,7 @@ export function createApiRouter(mcpManager: MCPClientManager, upload: multer.Mul
   const router = express.Router();
 
   // Health check endpoint
-  router.get('/health', (req: Request, res: Response) => {
+  router.get('/health', (req: Request, res: Response): void => {
     const status: HealthStatus = {
       status: 'ok',
       timestamp: new Date().toISOString(),
@@ -29,35 +29,55 @@ export function createApiRouter(mcpManager: MCPClientManager, upload: multer.Mul
 
   // Get all conversations
   router.get('/conversations', (req: Request, res: Response) => {
-    const conversations = storage.getAllConversations();
-    res.json(conversations);
+    try {
+      const conversations = storage.getAllConversations();
+      res.json(conversations);
+    } catch (error: any) {
+      console.error('Error getting conversations:', error);
+      res.status(500).json({ error: error.message });
+    }
   });
 
   // Get a specific conversation
   router.get('/conversations/:id', (req: Request, res: Response) => {
-    const conversation = storage.getConversation(req.params.id);
-    if (!conversation) {
-      res.status(404).json({ error: 'Conversation not found' });
-      return;
+    try {
+      const conversation = storage.getConversation(req.params.id);
+      if (!conversation) {
+        res.status(404).json({ error: 'Conversation not found' });
+        return;
+      }
+      res.json(conversation);
+    } catch (error: any) {
+      console.error('Error getting conversation:', error);
+      res.status(500).json({ error: error.message });
     }
-    res.json(conversation);
   });
 
   // Create a new conversation
   router.post('/conversations', (req: Request, res: Response) => {
-    const { title } = req.body;
-    const conversation = storage.createConversation(title);
-    res.status(201).json(conversation);
+    try {
+      const { title } = req.body;
+      const conversation = storage.createConversation(title);
+      res.status(201).json(conversation);
+    } catch (error: any) {
+      console.error('Error creating conversation:', error);
+      res.status(500).json({ error: error.message });
+    }
   });
 
   // Delete a conversation
   router.delete('/conversations/:id', (req: Request, res: Response) => {
-    const success = storage.deleteConversation(req.params.id);
-    if (!success) {
-      res.status(404).json({ error: 'Conversation not found' });
-      return;
+    try {
+      const success = storage.deleteConversation(req.params.id);
+      if (!success) {
+        res.status(404).json({ error: 'Conversation not found' });
+        return;
+      }
+      res.status(204).send();
+    } catch (error: any) {
+      console.error('Error deleting conversation:', error);
+      res.status(500).json({ error: error.message });
     }
-    res.status(204).send();
   });
 
   // Chat endpoint
@@ -327,17 +347,21 @@ Remember: You are the Oracle of Athas - wise, efficient, and deeply connected to
 
       if (file.mimetype === 'application/pdf') {
         try {
-          const dataBuffer = fs.readFileSync(file.path);
-          const pdfData = await pdf(dataBuffer);
-          content = pdfData.text;
-          processed = true;
+          if (fs.existsSync(file.path)) {
+            const dataBuffer = fs.readFileSync(file.path);
+            const pdfData = await pdf(dataBuffer);
+            content = pdfData.text;
+            processed = true;
+          }
         } catch (error) {
           console.error('PDF processing error:', error);
         }
       } else if (file.mimetype.startsWith('text/')) {
         try {
-          content = fs.readFileSync(file.path, 'utf-8');
-          processed = true;
+          if (fs.existsSync(file.path)) {
+            content = fs.readFileSync(file.path, 'utf-8');
+            processed = true;
+          }
         } catch (error) {
           console.error('Text file processing error:', error);
         }

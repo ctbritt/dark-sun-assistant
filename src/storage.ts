@@ -5,7 +5,7 @@ class Storage {
   private conversations: Map<string, Conversation> = new Map();
 
   createConversation(title: string = 'New Conversation'): Conversation {
-    const id = `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const id = `conv_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
     const conversation: Conversation = {
       id,
       title,
@@ -33,7 +33,7 @@ class Storage {
     }
 
     const message: Message = {
-      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
       conversationId,
       role,
       content,

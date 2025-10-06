@@ -6,7 +6,6 @@ import express from 'express';
 import path from 'path';
 import multer, { FileFilterCallback } from 'multer';
 import { Request } from 'express';
-import { FileAttachment } from './types';
 import { MCPClientManager, loadMCPConfig } from './mcp-client';
 import { createApiRouter } from './routes/api';
 
@@ -72,6 +71,12 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
+// Error handling middleware (must be last)
+app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Error:', err.message);
+  res.status(500).json({ error: err.message || 'Internal server error' });
+});
+
 // Initialize and start server
 async function start() {
   try {
@@ -79,7 +84,7 @@ async function start() {
     await mcpManager.initialize();
 
     // Start HTTP server
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`\n╔════════════════════════════════════════════════════════╗`);
       console.log(`║  Dark Sun Campaign Assistant Server                   ║`);
       console.log(`╚════════════════════════════════════════════════════════╝`);
@@ -90,6 +95,9 @@ async function start() {
       console.log(`\n🔧 MCP Servers: ${connectedCount}/${serverStatus.length} connected`);
       console.log(`\nPress Ctrl+C to stop the server.\n`);
     });
+
+    // Set server timeout
+    server.timeout = 120000; // 2 minutes
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);

@@ -183,9 +183,9 @@ export function loadMCPConfig(): MCPServerConfig[] {
         'run',
         '@smithery/notion',
         '--key',
-        '4929fc58-140f-4517-b664-5ec7ec6256e8',
+        process.env.NOTION_API_KEY || '',
         '--profile',
-        'familiar-lobster-OaR4zQ'
+        process.env.NOTION_PROFILE || ''
       ]
     }
   ];
