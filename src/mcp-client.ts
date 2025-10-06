@@ -55,7 +55,14 @@ export class MCPClientManager {
         capabilities: {}
       });
 
-      await client.connect(transport);
+      // Add timeout to prevent hanging
+      await Promise.race([
+        client.connect(transport),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Connection timeout')), 5000)
+        )
+      ]);
+
       this.clients.set(config.name, client);
       console.log(`Connected to MCP server: ${config.name}`);
     } catch (error) {
