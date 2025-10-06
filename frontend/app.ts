@@ -33,6 +33,23 @@ class DarkSunApp {
   private currentConversationId: string | null = null;
   private conversations: Conversation[] = [];
   private selectedFile: File | null = null;
+  private loadingIndicator: HTMLElement | null = null;
+  private loadingMessageInterval: number | null = null;
+  private currentLoadingMessageIndex: number = 0;
+
+  // Dark Sun themed loading messages
+  private readonly loadingMessages = [
+    'Consulting the Oracle of Athas...',
+    'Deciphering ancient scrolls...',
+    'Communing with the spirits of the Tablelands...',
+    'Searching the archives of Tyr...',
+    'Channeling the Way...',
+    'Consulting the sorcerer-kings\' wisdom...',
+    'Reading the obsidian oracles...',
+    'Invoking psionic visions...',
+    'Scanning the ruins of Kalidnay...',
+    'Consulting the Veiled Alliance...'
+  ];
 
   constructor() {
     this.init();
@@ -260,14 +277,17 @@ class DarkSunApp {
       const finalMessage = message || (attachments.length > 0 ? `Please analyze this file: ${attachments[0].originalName}` : '');
 
       // Add user message to UI immediately
-      this.addMessageToUI({ 
-        role: 'user', 
-        content: finalMessage, 
+      this.addMessageToUI({
+        role: 'user',
+        content: finalMessage,
         timestamp: new Date().toISOString(),
         attachments: attachments.length > 0 ? attachments : undefined
       } as any);
 
-      // Send to server
+      // Show loading indicator
+      this.showLoadingIndicator();
+
+      // Send to server using fetch with SSE streaming
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -278,11 +298,61 @@ class DarkSunApp {
         })
       });
 
-      const data = await response.json();
-      this.currentConversationId = data.conversationId;
+      if (!response.body) {
+        throw new Error('No response body');
+      }
 
-      // Add assistant message
-      this.addMessageToUI(data.message);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+
+          // Keep the last incomplete line in the buffer
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+
+              if (data === '[DONE]') {
+                break;
+              }
+
+              try {
+                const event = JSON.parse(data);
+
+                if (event.type === 'progress') {
+                  // Update loading indicator with specific action
+                  this.updateLoadingAction(event.action);
+                } else if (event.type === 'response') {
+                  // Final response received
+                  this.currentConversationId = event.data.conversationId;
+
+                  // Hide loading indicator
+                  this.hideLoadingIndicator();
+
+                  // Add assistant message
+                  this.addMessageToUI(event.data.message);
+                } else if (event.type === 'error') {
+                  throw new Error(event.error);
+                }
+              } catch (e) {
+                console.error('Failed to parse SSE event:', e);
+              }
+            }
+          }
+        }
+      } finally {
+        reader.releaseLock();
+      }
 
       // Update conversation list
       await this.loadConversations();
@@ -291,6 +361,7 @@ class DarkSunApp {
       input.value = '';
     } catch (error) {
       console.error('Failed to send message:', error);
+      this.hideLoadingIndicator();
       alert('Failed to send message. Please try again.');
     } finally {
       input.disabled = false;
@@ -381,6 +452,122 @@ class DarkSunApp {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  /**
+   * Show the Dark Sun themed loading indicator with cycling messages
+   */
+  private showLoadingIndicator(): void {
+    const messagesEl = document.getElementById('messages');
+    if (!messagesEl) return;
+
+    // Remove welcome message if present
+    const welcome = messagesEl.querySelector('.welcome-message');
+    if (welcome) {
+      welcome.remove();
+    }
+
+    // Create loading indicator element
+    this.loadingIndicator = document.createElement('div');
+    this.loadingIndicator.className = 'message assistant loading-message';
+    this.loadingIndicator.innerHTML = `
+      <div class="loading-spinner"></div>
+      <div class="loading-content">
+        <div class="loading-text">${this.loadingMessages[0]}</div>
+        <div class="loading-action"></div>
+      </div>
+    `;
+
+    messagesEl.appendChild(this.loadingIndicator);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+    // Start cycling through messages
+    this.currentLoadingMessageIndex = 0;
+    this.loadingMessageInterval = window.setInterval(() => {
+      this.cycleLoadingMessage();
+    }, 2500);
+  }
+
+  /**
+   * Hide and remove the loading indicator
+   */
+  private hideLoadingIndicator(): void {
+    if (this.loadingMessageInterval) {
+      clearInterval(this.loadingMessageInterval);
+      this.loadingMessageInterval = null;
+    }
+
+    if (this.loadingIndicator) {
+      // Fade out animation
+      this.loadingIndicator.style.opacity = '0';
+      this.loadingIndicator.style.transform = 'translateY(-10px)';
+      this.loadingIndicator.style.transition = 'all 0.3s ease-out';
+
+      setTimeout(() => {
+        if (this.loadingIndicator) {
+          this.loadingIndicator.remove();
+          this.loadingIndicator = null;
+        }
+      }, 300);
+    }
+
+    this.currentLoadingMessageIndex = 0;
+  }
+
+  /**
+   * Cycle to the next loading message
+   */
+  private cycleLoadingMessage(): void {
+    if (!this.loadingIndicator) return;
+
+    const loadingTextEl = this.loadingIndicator.querySelector('.loading-text') as HTMLElement;
+    if (!loadingTextEl) return;
+
+    // Move to next message
+    this.currentLoadingMessageIndex = (this.currentLoadingMessageIndex + 1) % this.loadingMessages.length;
+
+    // Fade out current text
+    loadingTextEl.style.opacity = '0';
+    loadingTextEl.style.transform = 'translateX(-10px)';
+
+    setTimeout(() => {
+      // Update text
+      loadingTextEl.textContent = this.loadingMessages[this.currentLoadingMessageIndex];
+
+      // Reset animation by removing and re-adding the animation class
+      loadingTextEl.style.animation = 'none';
+      setTimeout(() => {
+        loadingTextEl.style.animation = '';
+        loadingTextEl.style.opacity = '';
+        loadingTextEl.style.transform = '';
+      }, 10);
+    }, 200);
+  }
+
+  /**
+   * Update the loading indicator with a specific action message
+   * For future use when MCP server queries are integrated
+   * @param action - The specific action being performed (e.g., "Accessing Obsidian vault: campaign-notes.md")
+   */
+  public updateLoadingAction(action: string): void {
+    if (!this.loadingIndicator) return;
+
+    const actionEl = this.loadingIndicator.querySelector('.loading-action');
+    if (!actionEl) return;
+
+    actionEl.textContent = action;
+  }
+
+  /**
+   * Clear the specific action message from the loading indicator
+   */
+  public clearLoadingAction(): void {
+    if (!this.loadingIndicator) return;
+
+    const actionEl = this.loadingIndicator.querySelector('.loading-action');
+    if (!actionEl) return;
+
+    actionEl.textContent = '';
   }
 }
 

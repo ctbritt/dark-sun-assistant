@@ -85,7 +85,12 @@ export function createApiRouter(mcpManager: MCPClientManager, upload: multer.Mul
     }
   });
 
-  // Chat endpoint
+  // Helper function to send SSE progress updates
+  function sendProgress(res: Response, action: string) {
+    res.write(`data: ${JSON.stringify({ type: 'progress', action })}\n\n`);
+  }
+
+  // Chat endpoint with Server-Sent Events for progress updates
   router.post('/chat', async (req: Request, res: Response) => {
     try {
       const { message, conversationId, attachments } = req.body as ChatRequest;
@@ -94,6 +99,11 @@ export function createApiRouter(mcpManager: MCPClientManager, upload: multer.Mul
         res.status(400).json({ error: 'Message is required' });
         return;
       }
+
+      // Set up SSE headers
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
 
       // Get or create conversation
       let conversation = conversationId ? storage.getConversation(conversationId) : null;
@@ -104,6 +114,8 @@ export function createApiRouter(mcpManager: MCPClientManager, upload: multer.Mul
       // Add user message
       const userMessage = storage.addMessage(conversation.id, 'user', message, attachments);
 
+      sendProgress(res, 'Preparing to consult the Oracle...');
+
       // Get MCP tools from connected servers
       const mcpTools: any[] = [];
       const serverStatus = mcpManager.getServerStatus();
@@ -111,6 +123,7 @@ export function createApiRouter(mcpManager: MCPClientManager, upload: multer.Mul
       for (const server of serverStatus) {
         if (server.status === 'connected') {
           try {
+            sendProgress(res, `Loading tools from ${server.name}...`);
             const toolsResult = await mcpManager.queryServer(server.name, 'list-tools');
             if (toolsResult.availableTools) {
               // Convert MCP tools to Anthropic tool format
@@ -143,6 +156,8 @@ export function createApiRouter(mcpManager: MCPClientManager, upload: multer.Mul
 
       let finalResponse = '';
       const maxIterations = 10;
+
+      sendProgress(res, 'Channeling the Way...');
 
       for (let i = 0; i < maxIterations; i++) {
          const claudeResponse = await anthropic.messages.create({
@@ -267,6 +282,27 @@ Remember: You are the Oracle of Athas - wise, efficient, and deeply connected to
 
             console.log(`Calling tool: ${serverName}/${toolName}`, block.input);
 
+            // Send progress update with specific MCP server and tool info
+            const serverDisplayName = serverName === 'obsidian-vault' ? 'Obsidian Vault' :
+                                     serverName === 'dark-sun-materials' ? 'Dark Sun Materials' :
+                                     serverName === 'foundry-vtt' ? 'Foundry VTT' :
+                                     serverName;
+
+            let actionText = `Accessing ${serverDisplayName}`;
+
+            // Add specific file/resource info if available
+            const input = block.input as any;
+            if (input?.path) {
+              const fileName = input.path.split('/').pop();
+              actionText += `: ${fileName}`;
+            } else if (input?.query) {
+              actionText += `: searching for "${input.query}"`;
+            } else if (input?.name) {
+              actionText += `: ${input.name}`;
+            }
+
+            sendProgress(res, actionText);
+
             try {
               // Call the MCP tool
               const result = await mcpManager.callTool(serverName, toolName, block.input);
@@ -300,6 +336,8 @@ Remember: You are the Oracle of Athas - wise, efficient, and deeply connected to
         });
       }
 
+      sendProgress(res, 'Formulating response...');
+
       const assistantMessage = storage.addMessage(
         conversation.id,
         'assistant',
@@ -312,10 +350,14 @@ Remember: You are the Oracle of Athas - wise, efficient, and deeply connected to
         mcpResponses: []
       };
 
-      res.json(response);
+      // Send final response as SSE event
+      res.write(`data: ${JSON.stringify({ type: 'response', data: response })}\n\n`);
+      res.write('data: [DONE]\n\n');
+      res.end();
     } catch (error) {
       console.error('Chat error:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      res.write(`data: ${JSON.stringify({ type: 'error', error: 'Internal server error' })}\n\n`);
+      res.end();
     }
   });
 

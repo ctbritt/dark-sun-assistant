@@ -5,11 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dark Sun Campaign Assistant</title>
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>🌅 Dark Sun Campaign Assistant</h1>
+    <header class="header-banner">
+      <div class="header-content">
+        <h1 class="main-title">Dark Sun Campaign Assistant</h1>
+        <div class="header-subtitle">A Guide to the Scorched World of Athas</div>
+      </div>
       <div class="status" id="status">
         <span class="status-indicator"></span>
         <span id="status-text">Connecting...</span>
@@ -20,8 +26,10 @@
       <div class="layout">
         <aside class="sidebar">
           <div class="sidebar-header">
-            <h2>Conversations</h2>
-            <button id="new-conversation-btn" title="New Conversation">+</button>
+            <h2 class="sidebar-title">Conversations</h2>
+            <button id="new-conversation-btn" class="btn-primary btn-icon" title="New Conversation">
+              <span class="icon-plus">+</span>
+            </button>
           </div>
           <div id="conversations-list" class="conversations-list">
             <!-- Conversations will be loaded here -->
@@ -31,43 +39,60 @@
         <section class="chat-area">
           <div id="messages" class="messages">
             <div class="welcome-message">
-              <h2>Welcome to Dark Sun Campaign Assistant</h2>
-              <p>Your AI-powered companion for Dark Sun campaigns.</p>
-              <ul>
-                <li>💬 Ask questions about the Dark Sun setting</li>
-                <li>📖 Access your Obsidian notes</li>
-                <li>🎲 Manage Foundry VTT content</li>
-                <li>🗺️ Track campaign events and NPCs</li>
+              <h2 class="welcome-title">Welcome to the Scorched Wastes</h2>
+              <div class="welcome-divider"></div>
+              <p class="welcome-intro">Your AI-powered companion for navigating the brutal world of Athas.</p>
+              <ul class="feature-list">
+                <li class="feature-item">
+                  <span class="feature-icon">⚔</span>
+                  <span class="feature-text">Ask questions about the Dark Sun setting</span>
+                </li>
+                <li class="feature-item">
+                  <span class="feature-icon">📜</span>
+                  <span class="feature-text">Access your Obsidian campaign notes</span>
+                </li>
+                <li class="feature-item">
+                  <span class="feature-icon">🎲</span>
+                  <span class="feature-text">Manage Foundry VTT content</span>
+                </li>
+                <li class="feature-item">
+                  <span class="feature-icon">🗺</span>
+                  <span class="feature-text">Track campaign events and NPCs</span>
+                </li>
               </ul>
-              <p class="note">Start a conversation below to begin!</p>
+              <div class="welcome-divider"></div>
+              <p class="welcome-note">Begin your journey across the Tablelands below.</p>
             </div>
           </div>
 
           <form id="chat-form" class="chat-input">
-            <div class="input-area">
-              <textarea
-                id="message-input"
-                placeholder="Ask about the Dark Sun world, your notes, or campaign..."
-                rows="2"
-              ></textarea>
-              <div class="file-upload-area" id="file-upload-area">
-                <input type="file" id="file-input" accept="image/*,.pdf,.txt,.md" style="display: none;">
-                <button type="button" id="file-upload-btn" class="file-upload-btn" title="Upload File">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="7,10 12,15 17,10"/>
-                    <line x1="12" y1="15" x2="12" y2="3"/>
-                  </svg>
-                </button>
+            <div class="input-container">
+              <div class="input-area">
+                <textarea
+                  id="message-input"
+                  class="message-textarea"
+                  placeholder="Ask about the Dark Sun world, your notes, or campaign..."
+                  rows="2"
+                ></textarea>
+                <div class="file-upload-area" id="file-upload-area">
+                  <input type="file" id="file-input" accept="image/*,.pdf,.txt,.md" style="display: none;">
+                  <button type="button" id="file-upload-btn" class="file-upload-btn" title="Upload File">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="7,10 12,15 17,10"/>
+                      <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                  </button>
+                </div>
               </div>
-            </div>
-            <div id="file-preview" class="file-preview" style="display: none;">
-              <div class="file-preview-item">
-                <span class="file-name"></span>
-                <button type="button" class="file-remove-btn">×</button>
+              <div id="file-preview" class="file-preview" style="display: none;">
+                <div class="file-preview-item">
+                  <span class="file-name"></span>
+                  <button type="button" class="file-remove-btn">×</button>
+                </div>
               </div>
+              <button type="submit" id="send-btn" class="btn-primary btn-send">Send</button>
             </div>
-            <button type="submit" id="send-btn">Send</button>
           </form>
         </section>
       </div>

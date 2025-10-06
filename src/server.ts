@@ -82,7 +82,8 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 });
 
 // Serve frontend (must be last)
-app.get('*', (req, res) => {
+// Express 5: Use regex for catch-all route
+app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
