@@ -4,6 +4,7 @@ dotenv.config();
 
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import multer, { FileFilterCallback } from 'multer';
 import { Request } from 'express';
 import { MCPClientManager, loadMCPConfig } from './mcp-client';
@@ -11,6 +12,14 @@ import { createApiRouter } from './routes/api';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Create upload directories if they don't exist
+const uploadDirs = ['uploads/images', 'uploads/documents', 'uploads/temp'];
+uploadDirs.forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -66,25 +75,27 @@ const mcpManager = new MCPClientManager(mcpConfig);
 // API Routes
 app.use('/api', createApiRouter(mcpManager, upload));
 
-// Serve frontend
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
-});
-
-// Error handling middleware (must be last)
+// Error handling middleware (must be before catch-all route)
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Error:', err.message);
   res.status(500).json({ error: err.message || 'Internal server error' });
 });
 
+// Serve frontend (must be last)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
 // Initialize and start server
+let httpServer: any;
+
 async function start() {
   try {
-    // Initialize MCP connections (in mock mode for MVP)
+    // Initialize MCP connections
     await mcpManager.initialize();
 
     // Start HTTP server
-    const server = app.listen(PORT, () => {
+    httpServer = app.listen(PORT, () => {
       console.log(`\n╔════════════════════════════════════════════════════════╗`);
       console.log(`║  Dark Sun Campaign Assistant Server                   ║`);
       console.log(`╚════════════════════════════════════════════════════════╝`);
@@ -97,7 +108,7 @@ async function start() {
     });
 
     // Set server timeout
-    server.timeout = 120000; // 2 minutes
+    httpServer.timeout = 120000; // 2 minutes
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);
@@ -105,17 +116,24 @@ async function start() {
 }
 
 // Graceful shutdown
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, shutting down gracefully...');
-  await mcpManager.close();
-  process.exit(0);
-});
+async function shutdown(signal: string) {
+  console.log(`\n${signal} received, shutting down gracefully...`);
 
-process.on('SIGINT', async () => {
-  console.log('\nSIGINT received, shutting down gracefully...');
+  // Close HTTP server
+  if (httpServer) {
+    httpServer.close(() => {
+      console.log('HTTP server closed');
+    });
+  }
+
+  // Close MCP connections
   await mcpManager.close();
+
   process.exit(0);
-});
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
 
 // Start the server
 start();

@@ -52,35 +52,37 @@ class DarkSunApp {
     const fileUploadBtn = document.getElementById('file-upload-btn') as HTMLButtonElement;
     const fileRemoveBtn = document.querySelector('.file-remove-btn') as HTMLButtonElement;
 
-    form.addEventListener('submit', (e) => {
+    form?.addEventListener('submit', (e) => {
       e.preventDefault();
       this.sendMessage();
     });
 
-    input.addEventListener('keydown', (e) => {
+    input?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         this.sendMessage();
       }
     });
 
-    newConvBtn.addEventListener('click', () => {
+    newConvBtn?.addEventListener('click', () => {
       this.createNewConversation();
     });
 
-    // File upload event listeners
-    fileUploadBtn.addEventListener('click', () => {
-      fileInput.click();
-    });
+    // File upload event listeners (optional elements)
+    if (fileUploadBtn && fileInput) {
+      fileUploadBtn.addEventListener('click', () => {
+        fileInput.click();
+      });
 
-    fileInput.addEventListener('change', (e) => {
-      const target = e.target as HTMLInputElement;
-      if (target.files && target.files[0]) {
-        this.handleFileSelect(target.files[0]);
-      }
-    });
+      fileInput.addEventListener('change', (e) => {
+        const target = e.target as HTMLInputElement;
+        if (target.files && target.files[0]) {
+          this.handleFileSelect(target.files[0]);
+        }
+      });
+    }
 
-    fileRemoveBtn.addEventListener('click', () => {
+    fileRemoveBtn?.addEventListener('click', () => {
       this.removeSelectedFile();
     });
   }

@@ -4,14 +4,19 @@ import Anthropic from '@anthropic-ai/sdk';
 import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
-const pdf = require('pdf-parse');
+import { pdf as pdfParse } from 'pdf-parse';
 import { storage } from '../storage';
 import { MCPClientManager } from '../mcp-client';
 import { ChatRequest, ChatResponse, HealthStatus } from '../types';
 
+// Validate required environment variables
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.warn('⚠️  WARNING: ANTHROPIC_API_KEY not set. Chat functionality will not work.');
+}
+
 // Initialize Anthropic client
 const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY
+  apiKey: process.env.ANTHROPIC_API_KEY || 'missing-api-key'
 });
 
 export function createApiRouter(mcpManager: MCPClientManager, upload: multer.Multer): express.Router {
@@ -125,8 +130,17 @@ export function createApiRouter(mcpManager: MCPClientManager, upload: multer.Mul
 
       console.log(`Loaded ${mcpTools.length} MCP tools for Claude`);
 
-      // Call Claude API with tool calling loop
-      let currentMessages: any[] = [{ role: 'user', content: message }];
+      // Build conversation history for Claude
+      let currentMessages: any[] = conversation.messages
+        .slice(0, -1) // Exclude the just-added user message
+        .map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }));
+
+      // Add the current user message
+      currentMessages.push({ role: 'user', content: message });
+
       let finalResponse = '';
       const maxIterations = 10;
 
@@ -349,7 +363,7 @@ Remember: You are the Oracle of Athas - wise, efficient, and deeply connected to
         try {
           if (fs.existsSync(file.path)) {
             const dataBuffer = fs.readFileSync(file.path);
-            const pdfData = await pdf(dataBuffer);
+            const pdfData = await pdfParse(dataBuffer);
             content = pdfData.text;
             processed = true;
           }
@@ -423,21 +437,38 @@ Remember: You are the Oracle of Athas - wise, efficient, and deeply connected to
   router.delete('/files/:filename', (req: Request, res: Response) => {
     try {
       const { filename } = req.params;
+
+      // Sanitize filename to prevent path traversal
+      const sanitizedFilename = path.basename(filename);
+      if (sanitizedFilename !== filename || filename.includes('..')) {
+        res.status(400).json({ error: 'Invalid filename' });
+        return;
+      }
+
       const uploadsDir = path.join(__dirname, '../../uploads');
-      
+
       // Search for file in all directories
       const dirs = ['images', 'documents', 'temp'];
       let deleted = false;
-      
+
       for (const dir of dirs) {
-        const filePath = path.join(uploadsDir, dir, filename);
+        const filePath = path.join(uploadsDir, dir, sanitizedFilename);
+
+        // Ensure the resolved path is still within uploads directory (defense in depth)
+        const resolvedPath = path.resolve(filePath);
+        const resolvedUploadsDir = path.resolve(uploadsDir);
+        if (!resolvedPath.startsWith(resolvedUploadsDir)) {
+          res.status(400).json({ error: 'Invalid file path' });
+          return;
+        }
+
         if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath);
           deleted = true;
           break;
         }
       }
-      
+
       if (deleted) {
         res.json({ success: true, message: 'File deleted successfully' });
       } else {

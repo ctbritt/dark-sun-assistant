@@ -140,15 +140,17 @@ export class MCPClientManager {
 // In production, this would load from a config file
 export function loadMCPConfig(): MCPServerConfig[] {
   const foundryMCPPath = process.env.FOUNDRY_MCP_PATH || '/Users/christopherallbritton/Documents/GitHub/foundry-vtt-mcp/packages/mcp-server/dist/index.js';
+  const obsidianPath = process.env.OBSIDIAN_VAULT_PATH || '/Users/christopherallbritton/Library/Mobile Documents/iCloud~md~obsidian/Documents/Dark Sun Campaign';
+  const darkSunMaterialsPath = process.env.DARK_SUN_MATERIALS_PATH || '/Users/christopherallbritton/Documents/DnD.5e/06-Campaign-Resources/3. Dark Sun';
 
-  return [
+  const configs: MCPServerConfig[] = [
     {
       name: 'obsidian-vault',
       command: 'npx',
       args: [
         '-y',
         '@modelcontextprotocol/server-filesystem',
-        '/Users/christopherallbritton/Library/Mobile Documents/iCloud~md~obsidian/Documents/Dark Sun Campaign'
+        obsidianPath
       ]
     },
     {
@@ -157,7 +159,7 @@ export function loadMCPConfig(): MCPServerConfig[] {
       args: [
         '-y',
         '@modelcontextprotocol/server-filesystem',
-        '/Users/christopherallbritton/Documents/DnD.5e/06-Campaign-Resources/3. Dark Sun'
+        darkSunMaterialsPath
       ]
     },
     {
@@ -173,8 +175,12 @@ export function loadMCPConfig(): MCPServerConfig[] {
         FOUNDRY_CONNECTION_TIMEOUT: '10000',
         LOG_LEVEL: 'info'
       }
-    },
-    {
+    }
+  ];
+
+  // Only add Notion if API key and profile are configured
+  if (process.env.NOTION_API_KEY && process.env.NOTION_PROFILE) {
+    configs.push({
       name: 'notion',
       command: 'npx',
       args: [
@@ -183,10 +189,14 @@ export function loadMCPConfig(): MCPServerConfig[] {
         'run',
         '@smithery/notion',
         '--key',
-        process.env.NOTION_API_KEY || '',
+        process.env.NOTION_API_KEY,
         '--profile',
-        process.env.NOTION_PROFILE || ''
+        process.env.NOTION_PROFILE
       ]
-    }
-  ];
+    });
+  } else {
+    console.log('ℹ️  Notion MCP server not configured (NOTION_API_KEY or NOTION_PROFILE missing)');
+  }
+
+  return configs;
 }
