@@ -125,7 +125,7 @@ globs: *
 *   **PDF Parsing**:  "pdf-parse": "^1.1.1",
 *   **Multer**: "multer": "^1.4.5-lts.1",
 *   **Notion SDK**: "@notionhq/client"
-*   **Smithery SDK**: "@smithery/sdk"
+*    **Smithery SDK**: "@smithery/sdk"
 *   **Version Control**: Git
 
 ## PROJECT DOCUMENTATION & CONTEXT SYSTEM
@@ -204,11 +204,11 @@ When users upload files (images, PDFs, text files), you can:
 
 ### EFFICIENCY RULES
 
-1.  **Campaign Questions** → Check Obsidian vault FIRST
-2.  **Lore/Reference** → Check Dark Sun materials FIRST
-3.  **Live Game Data** → Use Foundry VTT for current state
-4.  **Collaborative Work** → Use Notion for shared content
-5.  **Web Search** → Only if local sources don't have the information
+1.  Campaign Questions → Check Obsidian vault FIRST
+2.  Lore/Reference → Check Dark Sun materials FIRST
+3.  Live Game Data → Use Foundry VTT for current state
+4.  Collaborative Work → Use Notion for shared content
+5.  Web Search → Only if local sources don't have the information
 
 ### PRIORITY ORDER
 

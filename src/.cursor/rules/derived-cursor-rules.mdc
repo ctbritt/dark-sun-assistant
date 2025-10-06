@@ -1,0 +1,206 @@
+---
+description: AI rules derived by SpecStory from the project AI interaction history
+globs: *
+---
+
+## PROJECT RULES & GUIDELINES
+
+### GENERAL PRINCIPLES
+
+*   The AI coding assistant follows all instructions precisely.
+*   The AI coding assistant should always strive to write clean, well-documented, and testable code.
+*   When presented with choices, the AI coding assistant should try to follow established project conventions and best practices.
+*   Always cite sources (e.g., which MCP server provided the information).
+
+### NAMING CONVENTIONS
+
+*   Follow consistent naming conventions for variables, functions, and classes.
+*   Use descriptive names that clearly indicate the purpose of the element.
+
+### ERROR HANDLING
+
+*   Implement robust error handling to prevent unexpected crashes.
+*   Provide informative error messages to the user.
+
+### SECURITY
+
+*   Sanitize user inputs to prevent security vulnerabilities.
+*   Store API keys and sensitive information securely (e.g., environment variables).
+*   Rotate exposed keys immediately and store them as environment variables or in a `.env` file managed by a secret manager.
+
+## WORKFLOW & RELEASE RULES
+
+### GIT & VERSION CONTROL
+
+*   Commit changes frequently with descriptive commit messages.
+*   Use feature branches for new development.
+*   Follow a consistent branching strategy (e.g., Gitflow).
+*   Before pushing, always resolve merge conflicts locally.
+*   Avoid force-pushing unless absolutely necessary and with caution (e.g., after secret removal). Use `--force-with-lease` for safety.
+
+### DEBUGGING
+
+*   Use console.log or a debugger to identify and fix issues.
+*   Check server logs for errors or exceptions.
+
+## TECH STACK
+
+### LANGUAGES
+
+*   TypeScript
+
+### LIBRARIES & FRAMEWORKS
+
+*   Node.js
+*   Express
+*   @anthropic-ai/sdk
+*   @modelcontextprotocol/sdk
+*   ws
+*   Multer
+*   pdf-parse
+*   @notionhq/client
+*   @smithery/sdk
+
+### TOOLS
+
+*   npm
+*   git
+*   jq
+
+## CODING STANDARDS
+
+### TYPESCRIPT
+
+*   Use explicit types for all variables and function parameters.
+*   Follow consistent code formatting and style guidelines.
+*   Use interfaces to define object structures.
+*   Avoid `any` type where possible.
+
+### COMMENTS & DOCUMENTATION
+
+*   Add comments to explain complex logic or non-obvious code.
+*   Generate API documentation using JSDoc or similar tools.
+
+## DEBUGGING
+
+*   Use `console.log` statements strategically to trace execution flow and inspect variable values.
+*   Leverage a debugger (e.g., in VS Code) for step-by-step execution and breakpoint analysis.
+*   Examine server-side logs for error messages, exceptions, or unexpected behavior.
+
+## PROJECT DOCUMENTATION & CONTEXT SYSTEM
+
+### README
+
+*   Provide a clear and concise overview of the project.
+*   Include instructions for setting up the development environment.
+*   Document API endpoints, data models, and key components.
+*   Include a link to the project's SpecStory documentation.
+
+### SPECSTORY
+
+*   Use SpecStory to capture and document user-AI interactions.
+*   Store SpecStory files in the `.specstory/` directory.
+*   Use descriptive filenames for SpecStory files (e.g., `feature-description.md`).
+*   Add `.specstory/` to `.gitignore` to exclude from version control.
+
+### ENVIRONMENT VARIABLES
+
+*   Store sensitive information (API keys, database passwords) in environment variables.
+*   Use a `.env` file for local development.
+*   Do NOT commit `.env` files to version control.
+
+### SYSTEM PROMPT
+
+*   The system prompt guides the AI assistant's behavior and capabilities.
+*   It defines the AI's role, access to resources, and response strategy.
+*   The system prompt must be optimized for efficiency and accuracy.
+
+### MCP SERVER USAGE STRATEGY
+
+*   The AI assistant has access to multiple MCP servers: Obsidian, Dark Sun Materials, Foundry VTT, and Notion.
+*   Each MCP server has a specific purpose and set of tools.
+*   The AI assistant must strategically use the appropriate MCP server(s) for each task.
+
+### PRIORITY ORDER
+
+1.  Campaign Questions → Check Obsidian vault FIRST
+2.  Lore/Reference → Check Dark Sun materials FIRST
+3.  Live Game Data → Use Foundry VTT for current state
+4.  Collaborative Work → Use Notion for shared content
+5.  Web Search → Only if local sources don't have the information
+
+### PARALLEL EXECUTION
+
+*   When possible, query multiple MCP servers simultaneously.
+*   Use `read_multiple_files` for batch operations.
+*   Combine related searches to minimize round trips.
+
+### SMART CACHING
+
+*   Remember information from previous queries in the conversation.
+*   Don't re-query the same data unless it might have changed.
+*   Use `list_directory` first to understand structure before deep searches.
+
+### RESPONSE STRATEGY
+
+1.  Identify the query type (campaign, lore, game mechanics, live data, collaborative).
+2.  Choose the appropriate MCP server(s) based on the priority order.
+3.  Execute queries efficiently using parallel calls when possible.
+4.  Provide comprehensive answers combining information from multiple sources.
+5.  Always cite your sources (which MCP server provided the information).
+
+### FILE ATTACHMENT HANDLING
+
+When users upload files (images, PDFs, text files), the AI can:
+
+*   **Images**: Describe what you see, identify Dark Sun elements, suggest how to use in campaign
+*   **PDFs**: Extract and analyze text content, reference specific sections
+*   **Text Files**: Read and analyze content, integrate with campaign knowledge
+*   **Always mention** when referencing uploaded content vs. knowledge base.
+
+## MCP SERVER DETAILS
+
+### OBSIDIAN VAULT (obsidian-vault) - CAMPAIGN BRAIN
+
+*   **USE FOR:** Current campaign state, NPCs, locations, session history, plot threads
+*   **WHEN TO USE:**
+    *   Questions about current campaign status, NPCs, or locations
+    *   Session preparation and recap requests
+    *   Character relationships and plot development
+    *   Campaign timeline and continuity questions
+*   **TOOLS:** `read_text_file`, `list_directory`, `search_files`, `read_multiple_files`
+
+### DARK SUN MATERIALS (dark-sun-materials) - LORE LIBRARY
+
+*   **USE FOR:** Reference materials, generators, maps, official content, tools
+*   **WHEN TO USE:**
+    *   Need specific Dark Sun lore, rules, or mechanics
+    *   Looking for generators, tools, or reference materials
+    *   Map requests or battle map needs
+    *   Equipment, spells, or creature information
+    *   Adventure modules or published content
+*   **TOOLS:** `read_text_file`, `list_directory`, `search_files`, `read_multiple_files`
+
+### FOUNDRY VTT (foundry-vtt) - LIVE GAME DATA
+
+*   **USE FOR:** Active game state, character sheets, compendiums, scene management
+*   **WHEN TO USE:**
+    *   Character stats, abilities, or inventory questions
+    *   Monster/creature lookups from compendiums
+    *   Scene management or token placement
+    *   Quest journal creation or updates
+    *   Player roll requests or game mechanics
+    *   Map generation or scene switching
+*   **TOOLS:** `get-character`, `list-characters`, `search-compendium`, `get-current-scene`, `create-quest-journal`, `request-player-rolls`
+
+### NOTION (notion) - COLLABORATIVE WORKSPACE
+
+*   **USE FOR:** Shared campaign notes, databases, collaborative content, project management
+*   **WHEN TO USE:**
+    *   Creating or updating shared campaign documents
+    *   Managing campaign databases (NPCs, locations, plot threads)
+    *   Collaborative note-taking and session planning
+    *   Project management for campaign preparation
+    *   Sharing information with players or co-DMs
+    *   Organizing campaign resources and timelines
+*   **TOOLS:** `search`, `fetch`, `create-pages`, `update-page`, `create-database`, `move-pages`
