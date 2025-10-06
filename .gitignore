@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-package-lock.json
 
 # Build output
 dist/
@@ -34,6 +33,12 @@ Thumbs.db
 *.swp
 *.swo
 *~
+*.code-workspace
+
+# Cursor IDE files
+.cursor/
+.cursorignore
+.cursorindexingignore
 
 # Temporary files
 tmp/
@@ -45,6 +50,11 @@ temp/
 *.backup
 *.bak
 
+# Uploaded files
+uploads/
+
 # MCP server logs
 mcp-*.log
+
+# SpecStory documentation (optional - contains AI interaction history)
 .specstory/
