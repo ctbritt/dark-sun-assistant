@@ -1,5 +1,17 @@
 // Type definitions for Dark Sun Assistant
 
+export interface FileAttachment {
+  id: string;
+  originalName: string;
+  filename: string;
+  path: string;
+  size: number;
+  mimetype: string;
+  uploadedAt: string;
+  content?: string;
+  processed?: boolean;
+}
+
 export interface Message {
   id: string;
   conversationId: string;
@@ -7,6 +19,7 @@ export interface Message {
   content: string;
   timestamp: Date;
   metadata?: Record<string, any>;
+  attachments?: FileAttachment[];
 }
 
 export interface Conversation {
@@ -27,6 +40,7 @@ export interface MCPServerConfig {
 export interface ChatRequest {
   message: string;
   conversationId?: string;
+  attachments?: FileAttachment[];
 }
 
 export interface ChatResponse {

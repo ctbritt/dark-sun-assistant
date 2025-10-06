@@ -12,32 +12,10 @@ export class MCPClientManager {
   }
 
   async initialize(): Promise<void> {
-    console.log('MCP Client Manager initializing...');
+    // For MVP, we'll skip actual MCP server connections
+    // This will be configured later with real server paths
+    console.log('MCP Client Manager initialized (mock mode)');
     console.log('Configured servers:', this.configs.map(c => c.name));
-
-    // Connect to Foundry VTT MCP server (SSH-based, always available)
-    const foundryConfig = this.configs.find(c => c.name === 'foundry-vtt');
-    if (foundryConfig) {
-      try {
-        await this.connectToServer(foundryConfig);
-        console.log('✓ Connected to Foundry VTT MCP server');
-      } catch (error) {
-        console.error('✗ Failed to connect to Foundry VTT:', error);
-      }
-    }
-
-    // Connect to local MCP servers (Obsidian, filesystem) if enabled
-    if (process.env.RUN_LOCAL_MCP === 'true') {
-      for (const config of this.configs) {
-        if (config.name === 'foundry-vtt') continue; // Already connected
-        try {
-          await this.connectToServer(config);
-          console.log(`✓ Connected to ${config.name}`);
-        } catch (error) {
-          console.error(`✗ Failed to connect to ${config.name}:`, error);
-        }
-      }
-    }
   }
 
   async connectToServer(config: MCPServerConfig): Promise<void> {
@@ -70,43 +48,13 @@ export class MCPClientManager {
       throw new Error(`Server ${serverName} not connected`);
     }
 
-    try {
-      // List available tools
-      const toolsResponse = await client.listTools();
-
-      return {
-        server: serverName,
-        query,
-        availableTools: toolsResponse.tools,
-        status: 'connected'
-      };
-    } catch (error: any) {
-      return {
-        server: serverName,
-        query,
-        error: error.message,
-        status: 'error'
-      };
-    }
-  }
-
-  async callTool(serverName: string, toolName: string, args: any): Promise<any> {
-    const client = this.clients.get(serverName);
-    if (!client) {
-      throw new Error(`Server ${serverName} not connected`);
-    }
-
-    try {
-      const result = await client.callTool({
-        name: toolName,
-        arguments: args
-      });
-
-      return result;
-    } catch (error: any) {
-      console.error(`Tool call failed for ${serverName}/${toolName}:`, error);
-      throw error;
-    }
+    // This would call actual MCP methods
+    // For now, return mock response
+    return {
+      server: serverName,
+      query,
+      response: 'Mock response (MCP server not configured)'
+    };
   }
 
   getServerStatus(): { name: string; status: 'connected' | 'disconnected' | 'error' }[] {
@@ -132,8 +80,6 @@ export class MCPClientManager {
 // Load MCP server configuration
 // In production, this would load from a config file
 export function loadMCPConfig(): MCPServerConfig[] {
-  const foundryMCPPath = process.env.FOUNDRY_MCP_PATH || '/Users/christopherallbritton/Documents/GitHub/foundry-vtt-mcp/packages/mcp-server/dist/index.js';
-
   return [
     {
       name: 'obsidian-vault',
@@ -155,31 +101,17 @@ export function loadMCPConfig(): MCPServerConfig[] {
     },
     {
       name: 'foundry-vtt',
-      command: 'node',
+      command: 'ssh',
       args: [
-        foundryMCPPath
+        '-t',
+        'foundry@foundry.azthir-terra.com',
+        'node',
+        '/home/foundry/foundry-vtt-mcp/packages/mcp-server/dist/index.js'
       ],
       env: {
-        FOUNDRY_HOST: 'localhost',
-        FOUNDRY_PORT: '31415',
-        FOUNDRY_NAMESPACE: '/foundry-mcp',
-        FOUNDRY_CONNECTION_TIMEOUT: '10000',
-        LOG_LEVEL: 'info'
+        FOUNDRY_HOST: process.env.FOUNDRY_HOST || 'foundry.azthir-terra.com',
+        FOUNDRY_PORT: process.env.FOUNDRY_PORT || '30000'
       }
-    },
-    {
-      name: 'notion',
-      command: 'npx',
-      args: [
-        '-y',
-        '@smithery/cli@latest',
-        'run',
-        '@smithery/notion',
-        '--key',
-        '4929fc58-140f-4517-b664-5ec7ec6256e8',
-        '--profile',
-        'familiar-lobster-OaR4zQ'
-      ]
     }
   ];
 }

@@ -311,6 +311,114 @@ main {
   to { transform: rotate(360deg); }
 }
 
+/* File Upload Styles */
+.input-area {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.file-upload-area {
+  display: flex;
+  align-items: center;
+}
+
+.file-upload-btn {
+  background: var(--surface-color);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+}
+
+.file-upload-btn:hover {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.file-upload-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.file-preview {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px;
+  margin-bottom: 8px;
+}
+
+.file-preview-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.file-name {
+  font-size: 14px;
+  color: var(--text-color);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-remove-btn {
+  background: var(--error-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+  transition: background-color 0.2s ease;
+}
+
+.file-remove-btn:hover {
+  background: #d32f2f;
+}
+
+/* Message Attachments */
+.attachments {
+  margin: 8px 0;
+  padding: 8px;
+  background: var(--surface-color);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.attachment {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.attachment-name {
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.attachment-size {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .sidebar {

@@ -1,5 +1,5 @@
 // In-memory storage for MVP (replace with proper database later)
-import { Conversation, Message } from './types';
+import { Conversation, Message, FileAttachment } from './types';
 
 class Storage {
   private conversations: Map<string, Conversation> = new Map();
@@ -26,7 +26,7 @@ class Storage {
       .sort((a, b) => b.updated.getTime() - a.updated.getTime());
   }
 
-  addMessage(conversationId: string, role: 'user' | 'assistant', content: string): Message {
+  addMessage(conversationId: string, role: 'user' | 'assistant', content: string, attachments?: FileAttachment[]): Message {
     const conversation = this.conversations.get(conversationId);
     if (!conversation) {
       throw new Error(`Conversation ${conversationId} not found`);
@@ -37,7 +37,8 @@ class Storage {
       conversationId,
       role,
       content,
-      timestamp: new Date()
+      timestamp: new Date(),
+      attachments: attachments
     };
 
     conversation.messages.push(message);

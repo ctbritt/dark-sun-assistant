@@ -1,11 +1,24 @@
 // Dark Sun Campaign Assistant Frontend
 
+interface FileAttachment {
+  id: string;
+  originalName: string;
+  filename: string;
+  path: string;
+  size: number;
+  mimetype: string;
+  uploadedAt: string;
+  content?: string;
+  processed?: boolean;
+}
+
 interface Message {
   id: string;
   conversationId: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+  attachments?: FileAttachment[];
 }
 
 interface Conversation {
@@ -19,6 +32,7 @@ interface Conversation {
 class DarkSunApp {
   private currentConversationId: string | null = null;
   private conversations: Conversation[] = [];
+  private selectedFile: File | null = null;
 
   constructor() {
     this.init();
@@ -34,6 +48,9 @@ class DarkSunApp {
     const form = document.getElementById('chat-form') as HTMLFormElement;
     const input = document.getElementById('message-input') as HTMLTextAreaElement;
     const newConvBtn = document.getElementById('new-conversation-btn') as HTMLButtonElement;
+    const fileInput = document.getElementById('file-input') as HTMLInputElement;
+    const fileUploadBtn = document.getElementById('file-upload-btn') as HTMLButtonElement;
+    const fileRemoveBtn = document.querySelector('.file-remove-btn') as HTMLButtonElement;
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -49,6 +66,22 @@ class DarkSunApp {
 
     newConvBtn.addEventListener('click', () => {
       this.createNewConversation();
+    });
+
+    // File upload event listeners
+    fileUploadBtn.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      if (target.files && target.files[0]) {
+        this.handleFileSelect(target.files[0]);
+      }
+    });
+
+    fileRemoveBtn.addEventListener('click', () => {
+      this.removeSelectedFile();
     });
   }
 
@@ -136,11 +169,71 @@ class DarkSunApp {
     }
   }
 
+  private handleFileSelect(file: File) {
+    // Validate file type and size
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'text/plain', 'text/markdown'];
+    const maxSize = 50 * 1024 * 1024; // 50MB
+
+    if (!allowedTypes.includes(file.type)) {
+      alert('Invalid file type. Only images, PDFs, and text files are allowed.');
+      return;
+    }
+
+    if (file.size > maxSize) {
+      alert('File size too large. Maximum size is 50MB.');
+      return;
+    }
+
+    this.selectedFile = file;
+    this.showFilePreview(file);
+  }
+
+  private showFilePreview(file: File) {
+    const preview = document.getElementById('file-preview') as HTMLDivElement;
+    const fileName = preview.querySelector('.file-name') as HTMLSpanElement;
+
+    fileName.textContent = file.name;
+    preview.style.display = 'block';
+  }
+
+  private removeSelectedFile() {
+    this.selectedFile = null;
+    const preview = document.getElementById('file-preview') as HTMLDivElement;
+    preview.style.display = 'none';
+    
+    // Reset file input
+    const fileInput = document.getElementById('file-input') as HTMLInputElement;
+    fileInput.value = '';
+  }
+
+  private async uploadFile(file: File): Promise<FileAttachment | null> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const result = await response.json();
+      return result.file;
+    } catch (error) {
+      console.error('File upload error:', error);
+      alert('Failed to upload file. Please try again.');
+      return null;
+    }
+  }
+
   private async sendMessage() {
     const input = document.getElementById('message-input') as HTMLTextAreaElement;
     const message = input.value.trim();
 
-    if (!message) return;
+    if (!message && !this.selectedFile) return;
 
     // Disable input while sending
     input.disabled = true;
@@ -153,16 +246,33 @@ class DarkSunApp {
         await this.createNewConversation();
       }
 
+      let attachments: FileAttachment[] = [];
+      if (this.selectedFile) {
+        const uploadedFile = await this.uploadFile(this.selectedFile);
+        if (uploadedFile) {
+          attachments.push(uploadedFile);
+        }
+        this.removeSelectedFile();
+      }
+
+      const finalMessage = message || (attachments.length > 0 ? `Please analyze this file: ${attachments[0].originalName}` : '');
+
       // Add user message to UI immediately
-      this.addMessageToUI({ role: 'user', content: message, timestamp: new Date().toISOString() } as any);
+      this.addMessageToUI({ 
+        role: 'user', 
+        content: finalMessage, 
+        timestamp: new Date().toISOString(),
+        attachments: attachments.length > 0 ? attachments : undefined
+      } as any);
 
       // Send to server
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message,
-          conversationId: this.currentConversationId
+          message: finalMessage,
+          conversationId: this.currentConversationId,
+          attachments: attachments.length > 0 ? attachments : undefined
         })
       });
 
@@ -220,10 +330,22 @@ class DarkSunApp {
   }
 
   private createMessageHTML(message: Message): string {
+    const attachmentsHTML = message.attachments && message.attachments.length > 0 
+      ? `<div class="attachments">
+           ${message.attachments.map(att => `
+             <div class="attachment">
+               <span class="attachment-name">📎 ${att.originalName}</span>
+               <span class="attachment-size">(${this.formatFileSize(att.size)})</span>
+             </div>
+           `).join('')}
+         </div>`
+      : '';
+
     return `
       <div class="message ${message.role}">
         <div class="role">${message.role === 'user' ? 'You' : 'Assistant'}</div>
         <div class="content">${this.escapeHtml(message.content)}</div>
+        ${attachmentsHTML}
         <div class="timestamp">${this.formatDate(message.timestamp)}</div>
       </div>
     `;
@@ -249,6 +371,14 @@ class DarkSunApp {
     if (days < 7) return `${days}d ago`;
 
     return date.toLocaleDateString();
+  }
+
+  private formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 }
 
