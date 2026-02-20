@@ -20,7 +20,7 @@
   "license": "MIT",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.65.0",
-    "@modelcontextprotocol/sdk": "^1.0.4",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "multer": "^2.0.2",
